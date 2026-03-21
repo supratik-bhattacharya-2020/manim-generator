@@ -30,6 +30,32 @@ Rules:
 8. Use descriptive variable names.
 9. Keep code under 4500 characters.
 
+SPATIAL LAYOUT (CRITICAL — prevents overlapping objects):
+
+Each step in the plan has a "region" field. Map regions to positions as follows:
+  top         → UP * 3             top-left    → UL * 2.5
+  center      → ORIGIN             top-right   → UR * 2.5
+  bottom      → DOWN * 3           bottom-left → DL * 2.5
+  left        → LEFT * 4           bottom-right→ DR * 2.5
+  right       → RIGHT * 4
+
+Layout rules you MUST follow:
+1. POSITION EVERY OBJECT — every new MObject must have an explicit position via
+   .move_to(), .to_edge(), .next_to(), or .shift(). NEVER rely on default ORIGIN placement.
+2. RESPECT THE REGION — place each step's objects in the region specified by the plan.
+   Use the coordinate mapping above.
+3. USE .next_to() FOR LABELS — labels and annotations go adjacent to the object they describe,
+   using .next_to(target, direction, buff=0.3). Never stack labels on top of geometry.
+4. CLEAR BEFORE REUSE — if a new object occupies the same region as an existing one,
+   FadeOut the old object first OR use ReplacementTransform. Do NOT leave both visible.
+5. SCALE TO FIT — if a step has many objects, use .scale() or VGroup().arrange() to
+   prevent them from exceeding their region. The safe content area is roughly 12 units wide × 7 tall.
+6. BUFF SPACING — always use buff=0.3 or more in .next_to() to keep visual gaps between elements.
+7. For multi-line equations or text appearing sequentially in the same region,
+   stack them with .next_to(prev_text, DOWN, buff=0.4) — never overlap.
+8. Title text goes at the top edge: title.to_edge(UP, buff=0.5)
+9. Final summary equations go at the bottom edge: eq.to_edge(DOWN, buff=0.5)
+
 Manim quick reference:
 - Shapes: Circle(), Square(), Triangle(), Polygon(*vertices), Rectangle(width, height),
   Line(start, end), Arrow(start, end), Dot(point), Arc(angle, radius)
@@ -92,7 +118,12 @@ async def generate_code(
         error = check_code(code)
         if error is None:
             console.print()
-            console.print(Syntax(code, "python", theme="monokai", line_numbers=True))
+            try:
+                console.print(Syntax(code, "python", theme="monokai", line_numbers=True))
+            except (UnicodeEncodeError, UnicodeDecodeError):
+                # Windows cp1252 can't render Unicode math symbols in Rich Syntax
+                console.print("[dim](Code preview skipped — Unicode display issue)[/dim]")
+                console.print(code)
             console.print()
             return code
 

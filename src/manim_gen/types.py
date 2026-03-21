@@ -28,6 +28,17 @@ class AnimationStep(BaseModel):
         description="Manim animation class, e.g. 'Create', 'Write', 'Transform'",
     )
     duration: float = Field(default=1.0, ge=0.1, le=10.0)
+    region: str = Field(
+        default="center",
+        description=(
+            "Screen region for this step's primary objects. "
+            "One of: top, center, bottom, left, right, top-left, top-right, bottom-left, bottom-right"
+        ),
+    )
+    narration: str = Field(
+        default="",
+        description="Voiceover narration text for this step. Should be natural, conversational speech.",
+    )
 
 
 class AnimationPlan(BaseModel):

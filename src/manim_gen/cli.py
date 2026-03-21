@@ -30,8 +30,9 @@ def display_plan(plan: AnimationPlan) -> None:
 
     table = Table(show_header=True, header_style="bold magenta", padding=(0, 1))
     table.add_column("#", style="bold", width=4, justify="right")
-    table.add_column("Description", min_width=40)
-    table.add_column("Objects", style="dim", min_width=16)
+    table.add_column("Description", min_width=36)
+    table.add_column("Objects", style="dim", min_width=14)
+    table.add_column("Region", style="green", width=12)
     table.add_column("Animation", style="cyan", width=14)
     table.add_column("Duration", justify="right", width=8)
 
@@ -40,6 +41,7 @@ def display_plan(plan: AnimationPlan) -> None:
             str(step.order),
             step.description,
             ", ".join(step.objects) if step.objects else "—",
+            step.region,
             step.animation_type,
             f"{step.duration:.1f}s",
         )
@@ -55,7 +57,7 @@ def _print_help() -> None:
     console.print("    [bold]a <n>[/bold]     — add step after n (0 = beginning)")
     console.print("    [bold]u <n>[/bold]     — move step n up")
     console.print("    [bold]w <n>[/bold]     — move step n down")
-    console.print("    [bold]q[/bold]         — cycle quality (low → medium → high)")
+    console.print("    [bold]q[/bold]         — cycle quality (low > medium > high)")
     console.print("    [bold]enter[/bold]     — confirm & generate")
     console.print("    [bold]esc / x[/bold]   — cancel")
     console.print("    [bold]h / ?[/bold]     — show this help")
@@ -116,10 +118,12 @@ def _edit_step(plan: AnimationPlan, n: int) -> None:
     console.print(f"  Editing step {n}: [dim]{step.description}[/dim]")
 
     desc = Prompt.ask("  New description", default=step.description)
+    region = Prompt.ask("  Region (top/center/bottom/left/right/top-left/top-right/bottom-left/bottom-right)", default=step.region)
     dur_str = Prompt.ask("  Duration (seconds)", default=str(step.duration))
     anim = Prompt.ask("  Animation type", default=step.animation_type)
 
     step.description = desc
+    step.region = region
     try:
         step.duration = float(dur_str)
     except ValueError:
@@ -147,6 +151,7 @@ def _add_step(plan: AnimationPlan, after: int) -> None:
     desc = Prompt.ask("  Step description")
     if not desc:
         return
+    region = Prompt.ask("  Region", default="center")
     dur_str = Prompt.ask("  Duration (seconds)", default="1.0")
     anim = Prompt.ask("  Animation type", default="Create")
 
@@ -161,6 +166,7 @@ def _add_step(plan: AnimationPlan, after: int) -> None:
         objects=[],
         animation_type=anim,
         duration=dur,
+        region=region,
     )
     plan.steps.insert(after, new_step)
     plan.reorder()
